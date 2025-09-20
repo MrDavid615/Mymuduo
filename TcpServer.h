@@ -10,6 +10,7 @@
 #include "InetAddress.h"
 #include "noncopyable.h"
 #include "EventLoopThreadPool.h"
+#include "EventLoopThread.h"
 #include "Callbacks.h"
 
 #include <functional>
@@ -29,7 +30,8 @@ public:
         kReusePort,
     };
 
-    TcpServer(EventLoop* loop, const InetAddress& listenAddr, Option option = kNoReusePort);
+    TcpServer(EventLoop* loop, const InetAddress& listenAddr, 
+                std::string nameArg, Option option = kNoReusePort);
     ~TcpServer();
 
     void setThreadInitCallback(const ThreadInitCallback& cb) { threadInitCallback_ = cb; }
@@ -42,6 +44,7 @@ public:
     // 开启服务器监听，相当于开启MainLoop的Acceptor的listen
     void start();
 private:
+    // 向subLoop中分发channel就是调用这个函数，acceptor中跑的就是这个
     void newConnection(int sockfd, const InetAddress& peerAddr);
     void removeConnection(const TcpConnectionPtr &conn);
     void removeConnectionInLoop(const TcpConnectionPtr &conn);
@@ -53,10 +56,13 @@ private:
     const std::string name_;
     std::unique_ptr<Acceptor> acceptor_;
     std::shared_ptr<EventLoopThreadPool> threadPool_;   // one loop per thread
-    ConnectionCallback connectionCallback_;             // 有新连接时的回调
-    MessageCallback messageCallback_;                   // 有读写消息时的回调
-    WriteCompleteCallback writeCompleteCallback_;        // 消息发送完成后的回调
+
+    ConnectionCallback connectionCallback_;             // 有新连接时的回调，与pollor无关
+    MessageCallback messageCallback_;                   // 有读写消息时的回调，与pollor无关
+    WriteCompleteCallback writeCompleteCallback_;       // 消息发送完成后的回调，与pollor无关
+
     ThreadInitCallback threadInitCallback_;             // Loop线程初始化回调
+
     std::atomic<int> started_;
 
     int nextConnId_;
