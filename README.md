@@ -1,26 +1,36 @@
 # Mymuduo
-重写的Moduo库，支持核心功能，将原始Moduo库中使用的boost库等使用C++11新特性替代。
+重写的Moduo库mymuduo，支持核心功能，将原始Moduo库中使用的boost库等使用C++11新特性替代。
+该版本的moduo仅需要在项目中包含一个TcpServer头文件即可正常使用
+代码以动态库 libmymuduo.so 的方式提供，同时提供源代码
+/sample路径下提供了示例demo，基于mymuduo库实现的回声服务器，内部有详细注释如何使用mymuduo编程
 
 Moduo库核心代码
 感谢施磊老师的教学
 
 Muduo核心组件：
-Channel：用于封装Fd与对应的事件回调
+组件一 Channel
+用于封装Fd与对应的事件回调
 
-Poller：用于封装epoll机制，执行epoll_create epoll_ctl epoll_wait
+组件二 Poller
+用于封装epoll机制，执行epoll_create epoll_ctl epoll_wait
 
-EventLoop：用于充当Poller与Channel的连接桥梁，分为MainLoop与SubLoop，Loop与Reactor等价
-            EventLoop
-            /         \
-           /           \
-          /             \
-         /               \
-    Poller              Channel
-    MainLoop：当有新连接到来，由MainLoop负责处理，如果在多线程状态下，MainLoop把Fd分发给SubLoop
-    SubLoop：当已连接用户发送读写事件，Poller中的epoll_wait返回，由SubLoop执行对应的Channel
+组件三 EventLoop
+用于充当Poller与Channel的连接桥梁，分为MainLoop与SubLoop，Loop与Reactor等价
+MainLoop：当有新连接到来，由MainLoop负责处理，如果在多线程状态下，MainLoop把Fd分发给SubLoop
+SubLoop：当已连接用户发送读写事件，Poller中的epoll_wait返回，由SubLoop执行对应的Channel
 
-ThreadPool：运行每个线程内部都运行一个SubLoop，实现One Loop Per Thread
+组件四 ThreadPool
+运行每个线程内部都运行一个SubLoop，实现One Loop Per Thread
 
-Acceptor：
+组件五 Acceptor
+负责监听新连接，运行于MainLoop中，内部封装了一个listenChannel，当有新连接时listenChannel会触发读事件回调
 
+组件六 TcpConnection
+新连接到来后会被Acceptor接收，之后将Tcp连接封装为TcpConnection，内部也封装了一个Channel
+Acceptor与TcpConnection本质上是一样的，但是一个运行在MainLoop中，一个运行在SubLoop中
 
+组件七 Buffer
+用于读写事件的缓冲，因为网络发送可能会比较慢，因此需要缓冲
+
+组件八 TcpServer
+直接对外暴露的接口，使用方法参考demo EchoServer
