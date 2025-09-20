@@ -12,6 +12,8 @@
 #include "EventLoopThreadPool.h"
 #include "EventLoopThread.h"
 #include "Callbacks.h"
+#include "TcpConnection.h"
+#include "Buffer.h"
 
 #include <functional>
 #include <string>

@@ -7,7 +7,7 @@
 
 
 static int createNonblocking() {
-    int fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
+    int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
     if(fd < 0) {
         LOG_FATAL("listen fd create fail\n");
     }

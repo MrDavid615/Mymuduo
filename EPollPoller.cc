@@ -28,7 +28,8 @@ EPollPoller::~EPollPoller()  {
 
 void EPollPoller::updateChannel(Channel* channel) {
     const int index = channel->index();
-    LOG_INFO("fd = %d events = %d index = %d", channel->fd(), channel->events(), index);
+    LOG_INFO("EPollPoller::updateChannel fd = %d events = %d index = %d", 
+            channel->fd(), channel->events(), index);
 
     if(index == kNew || index == kDeleted) {
         if(index == kNew) {
@@ -37,6 +38,7 @@ void EPollPoller::updateChannel(Channel* channel) {
             channels_[fd] = channel;
         }
         channel->set_index(kAdded); // 现在这个channel已经添加到channels中了
+        update(EPOLL_CTL_ADD, channel);
     }
     else {
         // 这个channel之前被添加过
@@ -63,26 +65,26 @@ void EPollPoller::removeChannel(Channel* channel) {
 }
 
 Timestamp EPollPoller::poll(int timeoutMs, ChannelList* activeChannels) {
-    LOG_INFO("func = %s => fd total count:%lu\n", __FUNCTION__, channels_.size());
+    LOG_INFO("EPollPoller::poll fd total count:%lu", channels_.size());
 
     int numEvents = ::epoll_wait(epollfd_, (epoll_event*)(&*events_.begin()), static_cast<int>(events_.size()), timeoutMs);
     int saveErrno = errno;  // 先保存下来
     Timestamp now(Timestamp::now());
 
     if(numEvents > 0) {
-        LOG_INFO("%d events happened\n", numEvents);
+        LOG_INFO("EPollPoller::poll %d events happened", numEvents);
         fillActiveChannels(numEvents, activeChannels);
         if(numEvents == events_.size()) {
             events_.resize(events_.size()*2);
         }
-        else if(numEvents == 0) {
-            LOG_INFO("zero events happened\n");
-        }
-        else {
-            if(saveErrno != EINTR) {
-                errno = saveErrno;
-                LOG_ERROR("POLL IS ERROR AND RET < 0\n");
-            }
+    }
+    else if(numEvents == 0) {
+        LOG_INFO("EPollPoller::poll happened\n");
+    }
+    else {
+        if(saveErrno != EINTR) {
+            errno = saveErrno;
+            LOG_ERROR("EPollPoller::poll error and ret < 0\n");
         }
     }
     return now;
@@ -103,8 +105,8 @@ void EPollPoller::update(int operation, Channel* channel) {
     epoll_event event;
     memset(&event, 0, sizeof(event));
     event.events = channel->events();   // fd感兴趣的事件
-    event.data.ptr = channel;           // 这个为什么？
-    event.data.fd = fd;                 // 这个其实不用
+    event.data.ptr = channel;
+    // event.data.fd = fd;                 // 这个其实不用
 
     if(::epoll_ctl(epollfd_, operation, fd, &event) < 0) {
         // 出现异常
