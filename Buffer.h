@@ -88,6 +88,9 @@ public:
     // 从fd里读数据
     ssize_t readFd(int fd, int* saveErrno);
 
+    // 向fd写数据
+    ssize_t writeFd(int fd, int* saveErrno);
+
 private:
     char* begin() {
         return &*buffer_.begin();

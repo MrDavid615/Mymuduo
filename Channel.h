@@ -34,8 +34,9 @@ public:
     void setCloseCallback(EventCallback cb) { closeCallback_ = std::move(cb); }
     void setErrorCallback(EventCallback cb) { errorCallback_ = std::move(cb); }
 
-    // 防止channel被手动remove后channel还在执行回调
-    void tie(const std::shared_ptr<void>&);
+    /* TcpConnection新连接创建的时候调用该函数，之后调用回调时通过tie_检查引用计数
+     * 引用计数为0时表示TcpConnection已经不存在 */
+     void tie(const std::shared_ptr<void>&);
 
     int fd() const { return fd_; }
     int events() const { return events_; }
@@ -77,7 +78,7 @@ private:
     int revents_;       // poller返回的具体发生的事件
     int index_;         // 
 
-    std::weak_ptr<void> tie_;
+    std::weak_ptr<void> tie_;   // 指向TcpConnection
     bool tied_;
 
     // channel通道内可以获取fd发生的事件revent，所以它负责调用具体的事件回调操作

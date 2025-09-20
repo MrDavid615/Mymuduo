@@ -19,6 +19,8 @@ Channel::Channel(EventLoop* loop, int fd)
 
 Channel::~Channel() {}
 
+// TcpConnection新连接创建的时候调用该函数，之后调用回调时通过tie_检查引用计数
+// 引用计数为0时表示TcpConnection已经不存在
 void Channel::tie(const std::shared_ptr<void>& obj) {
     tie_ = obj;
     tied_ = true;
@@ -37,11 +39,12 @@ void Channel::handleEvent(Timestamp receiveTime) {
     std::shared_ptr<void> guard;
     if(tied_) { // 如果tied_被弱智能指针锁定，将其提升后再运行，防止意外析构
         guard = tie_.lock();
-        if(guard) {
+        if(guard) { // 提升成功，证明TcpConnection仍然存在
             handleEventWithGuard(receiveTime);
         }
+        // else {} // 提升失败，证明TcpConnection已经析构，不执行回调
     }
-    else {
+    else {      // 对于MainLoop中的Acceptor，不需要TcpConnection，tie_为空
         handleEventWithGuard(receiveTime);
     }
 }

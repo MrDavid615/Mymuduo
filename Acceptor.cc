@@ -18,7 +18,8 @@ Acceptor::Acceptor(EventLoop* loop, const InetAddress& listenAddr, bool reusepor
     : loop_(loop)
     , acceptSocket_(createNonblocking())
     , acceptChannel_(loop, acceptSocket_.fd())
-    , listenning_(false) { 
+    , listenning_(false) 
+{ 
     acceptSocket_.setReusePort(true);
     acceptSocket_.setReusePort(true);
     acceptSocket_.bindAddress(listenAddr);
