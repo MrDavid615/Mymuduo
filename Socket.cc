@@ -13,21 +13,24 @@ Socket::~Socket() {
 
 void Socket::bindAddress(const InetAddress &localaddr) {
     if(0 != ::bind(sockfd_, (sockaddr*)localaddr.getSockAddr(), sizeof(sockaddr_in))) {
-        LOG_FATAL("bind sockfd fail %d\n", sockfd_);
+        LOG_FATAL("Socket::bindAddress fail %d\n", sockfd_);
     }
 }
 
 void Socket::listen() {
     if(0 != ::listen(sockfd_, 1024)) {
-        LOG_FATAL("listen sockfd fail %d\n", sockfd_);
+        LOG_FATAL("Socket::listen fail %d\n", sockfd_);
     }
 }
 
 int Socket::accept(InetAddress *peeraddr) {
     sockaddr_in addr;
-    socklen_t len;
+    socklen_t len = sizeof(addr);   // 这里必须设置为addr的大小
     bzero(&addr, sizeof(addr));
-    int connfd = ::accept(sockfd_, (sockaddr*)&addr, &len);
+
+    // accept返回的fd默认为阻塞状态，实际上对于Epoll模型，返回的fd应该是非阻塞的fd才可以
+    // int connfd = ::accept(sockfd_, (sockaddr*)&addr, &len);
+    int connfd = ::accept4(sockfd_, (sockaddr*)&addr, &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
     if(connfd >= 0) {
         peeraddr->setSockAddr(addr);
     }
@@ -36,7 +39,7 @@ int Socket::accept(InetAddress *peeraddr) {
 
 void Socket::shutdownWrite() {
     if(::shutdown(sockfd_, SHUT_WR) < 0) {
-        LOG_ERROR("shutdown write error");
+        LOG_ERROR("Socket::shutdownWrite error");
     }
 }
 

@@ -1,5 +1,11 @@
-#include "TcpServer.h"
-#include "Logger.h"
+/**
+ * 回声服务器
+ * 将客户端发送的数据重新发送给客户端，实现回声功能
+ * 之后服务器主动断开连接
+*/
+
+#include "TcpServer.h"  // mymuduo库完全依赖于C++11，仅需要包含这一个头文件
+#include "Logger.h"     // mymuduo库提供的日志，支持格式化输出
 
 #include <string>
 #include <functional>
@@ -8,9 +14,18 @@
 /**
  * mymuduo1.0 示例demo 回声服务器
  * 
- * 使用方法：sample可以独立运行
+ * 使用方法：
+ * 1、不加入系统环境变量
+ * sample可以独立运行
  * 将/sample/build目录清空，并重新执行cmake.. 与 make命令即可完成编译
  * 生成的可执行文件在build目录中，名为EchoServer
+ * 
+ * 2、加入系统环境变量
+ * 将所有.h文件加入/usr/include/mymuduo目录下，其中mymuduo自己创建的文件夹
+ * 将libmymuduo.so文件加入/usr/lib目录下
+ * 运行时直接包含
+ * #include <TcpServer.h>
+ * #include <Logger.h>
  * */
 
  
